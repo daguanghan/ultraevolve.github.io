@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UltraEvolve | Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --muted: #5f6b7b;
+      --accent: #1f7a6c;
+      --stroke: #e5e7eb;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      --font-display: "Space Grotesk", "Inter", sans-serif;
+      --font-body: "Inter", "Space Grotesk", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header {
+      border-bottom: 1px solid var(--stroke);
+      background: #f9faf7;
+    }
+    .container {
+      width: min(980px, 92vw);
+      margin: 0 auto;
+      padding: 24px 0 60px;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-family: var(--font-display);
+      font-weight: 700;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 4vw, 36px);
+      margin: 0;
+    }
+    label { font-size: 14px; color: var(--muted); }
+    input {
+      width: 100%;
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 15px;
+      font-family: var(--font-body);
+    }
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .status { font-size: 13px; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">UltraEvolve</div>
+      <a href="/">Back to Home</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Sign In</h1>
+    <div class="card">
+      <label>Email</label>
+      <input id="login-email" type="email" placeholder="you@example.com" />
+      <label>Password</label>
+      <input id="login-pass" type="password" placeholder="Password" />
+      <button class="btn" id="login-submit" type="button">Sign In</button>
+      <div class="status" id="login-status"></div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const emailInput = document.getElementById("login-email");
+    const passInput = document.getElementById("login-pass");
+    const statusEl = document.getElementById("login-status");
+    const submitBtn = document.getElementById("login-submit");
+
+    let supabaseClient = null;
+
+    async function initSupabase() {
+      const resp = await fetch("/v1/invites/config");
+      const data = await resp.json();
+      if (!data.supabase_url || !data.supabase_anon_key) {
+        statusEl.textContent = "Authentication not configured.";
+        return;
+      }
+      supabaseClient = window.supabase.createClient(data.supabase_url, data.supabase_anon_key);
+    }
+
+    submitBtn.addEventListener("click", async () => {
+      if (!supabaseClient) {
+        statusEl.textContent = "Authentication not configured.";
+        return;
+      }
+      const email = emailInput.value.trim();
+      const password = passInput.value.trim();
+      if (!email || !password) {
+        statusEl.textContent = "Please enter email and password.";
+        return;
+      }
+      submitBtn.disabled = true;
+      statusEl.textContent = "Signing in...";
+      try {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          statusEl.textContent = "Sign in failed. Please check your email or password.";
+          return;
+        }
+        statusEl.textContent = "Success! Redirecting...";
+        setTimeout(() => {
+          window.location.href = "/?v=11";
+        }, 600);
+      } catch (err) {
+        statusEl.textContent = "Sign in failed. Please try again later.";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    initSupabase();
+  </script>
+</body>
+</html>
